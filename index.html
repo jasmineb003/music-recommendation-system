@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Music Recommendation</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Discover Your Next Favorite Artist</h1>
+    <p>Enter your favorite artist to start getting recommendations!</p>
+
+    <form id="artistForm">
+      <input type="text" id="artistInput" placeholder="Enter Artist Name" required />
+      <button type="submit">Get Recommendations</button>
+    </form>
+
+    <div id="recommendations"></div>
+  </div>
+
+  <script>
+    $('#artistForm').on('submit', function (event) {
+      event.preventDefault();
+  
+      var artist_name = $('#artistInput').val().trim();
+  
+      if (!artist_name) {
+        $('#recommendations').html('<p>Please enter an artist name.</p>');
+        return;
+      }
+  
+      $.ajax({
+        url: '/recommend',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ artist: artist_name }),
+        success: function (response) {
+          var recommendations = response.recommendations;
+          var plotPath = response.plot_path;
+
+          if (recommendations.error) {
+            $('#recommendations').html('<p>' + recommendations.error + '</p>');
+            return;
+          }
+
+          var output = '<h2>Recommended Artists (by Cluster)</h2>';
+          
+          // Loop through each cluster
+          for (var cluster in recommendations) {
+            output += '<h3>' + cluster + '</h3>';
+            output += '<div class="recommendations-rows">';
+
+            var clusterArtists = recommendations[cluster];
+            for (var i = 0; i < clusterArtists.length; i += 2) {
+              output += '<div class="recommendations-row">';
+
+              // First artist card
+              output += '<div class="artist-card">';
+              output += '<a href="' + clusterArtists[i].url + '" target="_blank">';
+              output += '<img src="' + clusterArtists[i].image + '" alt="' + clusterArtists[i].name + '" />';
+              output += '<p>' + clusterArtists[i].name + '</p>';
+              output += '</a></div>';
+
+              // Optional second artist card
+              if (i + 1 < clusterArtists.length) {
+                output += '<div class="artist-card">';
+                output += '<a href="' + clusterArtists[i + 1].url + '" target="_blank">';
+                output += '<img src="' + clusterArtists[i + 1].image + '" alt="' + clusterArtists[i + 1].name + '" />';
+                output += '<p>' + clusterArtists[i + 1].name + '</p>';
+                output += '</a></div>';
+              }
+
+              output += '</div>'; // End row
+            }
+
+            output += '</div>'; // End cluster
+          }
+
+          // Add the plot image to the page
+          if (plotPath) {
+            output += '<h2>Cluster Plot</h2>';
+            output += '<img src="' + plotPath + '" alt="Cluster Plot" />';
+          }
+
+          $('#recommendations').html(output);
+        },
+        error: function () {
+          $('#recommendations').html('<p>Error fetching recommendations. Please try again.</p>');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+
