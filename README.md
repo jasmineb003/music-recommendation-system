@@ -33,4 +33,4 @@ flask run (for Mac/Linux)
 4. Run the http://127.0.0.1:5000
 
 ## Results
-Refer to the screenshots file for the expected outcome of the system
+Download the screenshots file for the expected outcome of the system
